@@ -1,8 +1,4 @@
-def test_read_root(client):
-    response = client.get('/')
-
-    assert response.status_code == 200
-    assert response.json() == {'message': 'Hello, World!'}
+from taskfy.schemas import UserPublic
 
 
 # test_create
@@ -10,7 +6,7 @@ def test_create_user(client):
     response = client.post(
         '/users/',
         json={
-            'name': 'John',
+            'username': 'John',
             'email': 'john@example.com',
             'password': 'secret',
         },
@@ -19,9 +15,23 @@ def test_create_user(client):
     assert response.status_code == 201
     assert response.json() == {
         'id': 1,
-        'name': 'John',
+        'username': 'John',
         'email': 'john@example.com',
     }
+
+
+def test_create_user_already_exists(client, user):
+    response = client.post(
+        '/users/',
+        json={
+            'username': 'test',
+            'email': 'test@example.com',  # already exists in database
+            'password': 'test',
+        },
+    )
+
+    assert response.status_code == 409
+    assert response.json() == {'detail': 'Username already exists'}
 
 
 # test_read
@@ -29,19 +39,21 @@ def test_read_users(client):
     response = client.get('/users/')
 
     assert response.status_code == 200
-    assert response.json() == {
-        'users': [
-            {'id': 1, 'name': 'John', 'email': 'john@example.com'},
-        ]
-    }
+    assert response.json() == {'users': []}
+
+
+def test_read_users_with_users(client, user):
+    user_schema = UserPublic.model_validate(user).model_dump()
+    response = client.get('/users/')
+    assert response.json() == {'users': [user_schema]}
 
 
 # test_update
-def test_update_user(client):
+def test_update_user(client, user):
     response = client.put(
         '/users/1',
         json={
-            'name': 'Jane',
+            'username': 'Jane',
             'email': 'jane@example.com',
             'password': 'secret',
         },
@@ -50,16 +62,16 @@ def test_update_user(client):
     assert response.status_code == 200
     assert response.json() == {
         'id': 1,
-        'name': 'Jane',
+        'username': 'Jane',
         'email': 'jane@example.com',
     }
 
 
-def test_update_user_not_found(client):
+def test_update_user_not_found(client, user):
     response = client.put(
         '/users/10',
         json={
-            'name': 'Jane',
+            'username': 'Jane',
             'email': 'jane@example.com',
             'password': 'secret',
         },
@@ -70,14 +82,14 @@ def test_update_user_not_found(client):
 
 
 # test_delete
-def test_delete_user(client):
+def test_delete_user(client, user):
     response = client.delete('/users/1')
 
     assert response.status_code == 200
     assert response.json() == {'detail': 'User deleted'}
 
 
-def test_delete_user_not_found(client):
+def test_delete_user_not_found(client, user):
     response = client.delete('/users/10')
 
     assert response.status_code == 404

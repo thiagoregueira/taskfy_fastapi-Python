@@ -1,8 +1,8 @@
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, ConfigDict, EmailStr
 
 
 class UserSchema(BaseModel):
-    name: str
+    username: str
     email: EmailStr
     password: str
 
@@ -10,12 +10,9 @@ class UserSchema(BaseModel):
 # DTO
 class UserPublic(BaseModel):
     id: int
-    name: str
+    username: str
     email: EmailStr
-
-
-class UserDB(UserSchema):
-    id: int
+    model_config = ConfigDict(from_attributes=True)
 
 
 # Mostrar lista de usuários
