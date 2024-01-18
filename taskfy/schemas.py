@@ -1,6 +1,17 @@
 from pydantic import BaseModel, ConfigDict, EmailStr
 
 
+# TokenData schema será utilizado para tipificar os dados extraídos do token JWT e garantir que temos um campo username que será usado para identificar o usuário.
+class TokenData(BaseModel):
+    username: str | None = None
+
+
+# Schema para nosso token
+class Token(BaseModel):
+    access_token: str
+    token_type: str
+
+
 class UserSchema(BaseModel):
     username: str
     email: EmailStr

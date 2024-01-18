@@ -1,6 +1,19 @@
 from taskfy.schemas import UserPublic
 
 
+# Testando o token
+def test_get_token(client, user):
+    response = client.post(
+        '/token/',
+        data={'username': user.email, 'password': user.clean_password},
+    )
+    token = response.json()
+
+    assert response.status_code == 200
+    assert 'access_token' in token
+    assert 'token_type' in token
+
+
 # test_create
 def test_create_user(client):
     response = client.post(
@@ -49,21 +62,21 @@ def test_read_users_with_users(client, user):
 
 
 # test_update
-def test_update_user(client, user):
+def test_update_user(client, user, token):
     response = client.put(
-        '/users/1',
+        f'/users/{user.id}',
+        headers={'Authorization': f'Bearer {token}'},
         json={
-            'username': 'Jane',
-            'email': 'jane@example.com',
-            'password': 'secret',
+            'username': 'bob',
+            'email': 'bob@example.com',
+            'password': 'mynewpassword',
         },
     )
-
     assert response.status_code == 200
     assert response.json() == {
+        'username': 'bob',
+        'email': 'bob@example.com',
         'id': 1,
-        'username': 'Jane',
-        'email': 'jane@example.com',
     }
 
 
@@ -82,9 +95,11 @@ def test_update_user_not_found(client, user):
 
 
 # test_delete
-def test_delete_user(client, user):
-    response = client.delete('/users/1')
-
+def test_delete_user(client, user, token):
+    response = client.delete(
+        f'/users/{user.id}',
+        headers={'Authorization': f'Bearer {token}'},
+    )
     assert response.status_code == 200
     assert response.json() == {'detail': 'User deleted'}
 
